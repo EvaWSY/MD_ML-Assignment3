@@ -1,8 +1,8 @@
-source('Lab 6/src/library.R')
+source('code/library.R')
 
 # IMPORT RAW DATA
 sqf.data.full <- foreach(year=2008:2009, .combine='rbind') %dopar% {
-  filename <- paste0('Lab 6/data/input/', year, '.csv')
+  filename <- paste0('data/input/', year, '.csv')
   this.data <- read_csv(filename)
   this.data
 }
@@ -218,7 +218,7 @@ sqf.data <- sqf.data %>% select(-crimsusp, -repcmd, -revcmd, -othfeatr, -addrtyp
 # restrict to CPW stops
 sqf.data <- sqf.data %>% filter(suspected.crime=='cpw')
 
-write_csv(sqf.data, 'Lab 6/data/output/sqf.csv')
+write_csv(sqf.data, 'data/output/sqf.csv')
 
 
 
