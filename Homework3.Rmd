@@ -1,0 +1,102 @@
+---
+title: "Homework 3"
+author: "Alan Chen, Andrea Hassler, and Eva Wang"
+date: "October 2018"
+output: pdf_document
+---
+
+
+# 1. Cleaning stop-and-frisk  
+_See import.R file_
+
+# 2. Making predictions with the stop-and-frisk data  
+## A) Restrict to stops where the suspected.crime is ‘cpw’, then train a logistic regression model on all of 2008, predicting whether or not a weapon is found.  
+
+**I. What are the ten largest and ten smallest coefficients? Pick one of these coefficients, and give a precise statement as to how that coefficient can be interpreted.**  
+
+In terms of magnitude, the ten largest coefficients are "location.housingtransit" (2.990), "stopped.bc.objectTRUE" (2.449), "location.housingneither" (0.801), "stopped.bc.lookoutTRUE" (0.723), "additional.sightsTRUE" (0.663), 'stopped.bc.casingTRUE" (0.551), "stopped.bc.furtiveTRUE" (0.490), "stopped.bc.clothingTRUE" (0.356), "additional.reportTRUE" (0.327), and "suspect.buildunknown" (0.317).  
+  
+In terms of magnitude, the ten smallest coefficients are "suspect.height" (0.001), "additional.highcrimeTRUE" (0.002), "precinct" (0.003), "stopped.bc.drugsTRUE" (0.008), "stopped.bc.drugsTRUE" (0.008), "monthOctober" (0.020), "suspect.buildthin" (0.024), "additional.proximityTRUE" (0.027), "monthFebruary" (0.032), "suspect.age" (0.036), and "time.period" (0.037). 
+  
+The coefficient on location.housingtransit may be interpreted as follows: On average, stops occurring at public transit are associated with an increase in the log odds of finding a weapon by 2.990 units compared to stops occurring at housing.  
+
+**II. Suppose my (imaginary) friend, a 30 year old, six-foot tall, 165 lb man of medium build was stopped in the West 4th subway station on 10/4/2018 at 8pm (no weapon was found). Upon reviewing the UF-250 form filled out for his stop, you notice that he was suspected of criminal possession of a weapon, and was stopped because he had a suspicious bulge in his coat, and he was near a part of the station known for having a high incidence of weapon offenses. He was observed for 10 minutes before the stop was made, and the stop was not the result of a radio call. If your model were used to predict the ex-ante probability that my friend were carrying a weapon, what would this probability be? What if my friend were a woman, everything else being equal?**  
+
+Our model would predict the ex-ante probability that the friend was carrying a weapon to be about 0.252. Everything being equal, if the friend were female, the predicted probability would be 0.224.  
+
+**III. Compute the AUC of this model on all data from 2009, using the ROCR package**  
+  
+The AUC of this model on all data from 2009 is about 78.31%.  
+
+**IV. The AUC can be interpreted as the probability that a randomly chosen true instance will be ranked higher than a randomly chosen false instance. Check that this interpretation holds by sampling (with replacement) 10,000 random pairs of true (weapon is found) and false (weapon is not found) examples from 2009, and computing the proportion of pairs where your model predicts that the true example is more likely to find a weapon than the false example. Confirm that your answer is approximately equal to the answer computed in part III)**  
+  
+The approximate AUC computed by sampling is about 78.82%, which is approximately equal to the AUC computed in part III.  
+  
+## B) Using the same model from part A, make a plot where the x-axis shows each year from 2009-2016, and the y-axis shows the model AUC (computed using the ROCR package) when that year is used as the test set. Explain in a few sentences what you observe, why you think this might be happening, and what one might do about it.
+  
+```{r, echo=F}
+knitr::include_graphics('partB_plot.pdf')
+
+```
+
+As shown in the plot above, as the year increases from 2009 to 2016, the model AUC generally decreases. This may be happening because the data is trained on only 2008 and is not flexible enough to accommodate data from later years. Trends in crime, policing practices, and policing policies likely change over time, so the model would likely be more accurate for years closer to 2008 than later years. To mitigate this issue, one might instead select a training sample based on proportion rather than on year, so that both the training and test sets would be random samples of all years.
+  
+## C) For this question, you will generate a performance and calibration plot (like the ones created in lecture 6) for a classifier of your choice by following the steps below. You must repeat this once for each team member (e.g., if there are two people on your team, you must choose two classifiers and generate a performance and calibration plot for each). Write at least one paragraph (per classifier) explaining what you did and what you found.
+
+### Predicting if weapon was pointed using naive bayes
+```{r, echo=F}
+knitr::include_graphics('performance_pt.pdf')
+
+```
+
+  
+  
+
+```{r, echo=F}
+knitr::include_graphics('calibration_pt.pdf')
+
+```
+
+In our first model, we used a Naive Bayes classifier to predict if the officer pointed their weapon during a stop. The model was trained on data from years 2008-2010 and tested on data from 2011. The variables used were similar to those in the first model predicting finding a weapon, including suspect demographics, reasons for stop, and time and location variables.  
+
+The resulting performance plot shows the estimated percentage of times an officer's weapon was pointed as a function of the number of stops conducted. The plot shows slower growth initially that continues to increase. From this plot we can see that the model predicts about 63% of occurances of a weapon being pointed to happen in about 30% of total stops, and over 80% of these occurrences are happening in about 65% of stops.  
+
+The calibration plot shows empirical probability versus model estimated probability. According to this plot, the model estimated probability is initially low compared to empirical probability, with many events in this range. Starting around 1%, the model estimated probability is consistently higher than the empirical probability, though the number of events in this range appears much lower. Since the points are mainly off the 45-degree line, this model does not appear to be well calibrated.
+
+### Predicting if arrested using logistic regression
+```{r, echo=F}
+knitr::include_graphics('performance_plot_arrestd.pdf')
+
+```
+
+  
+  
+
+```{r, echo=F}
+knitr::include_graphics('calibration_arrested.pdf')
+
+```
+
+- An effective stop is followed by an arrest. Our goal in this classifier is to make more effective stops by reducing the number of innocent people get stopped. In this case, we did the train/test split temporally with 2008-2011 data as training data, and 2012 as test data. Then, we used a logistic regression model to predict if the person in suspect was arrested. The variables used were all pre-stop variables, similar to those in the model in part A, which include time and location variables, demographics of the suspect, and reasons for stop. 
+
+- The performance plot shows the estimated percentage of arrested as a function of the number of stops conducted, where the stops are ordered by the model-predicted likelihood of being arrested. The resulting plot starts with a slower growth and continues with increasing rate. The growth rate is approximately constant after the best 10% of stops. The best 30% of stops result in 62.5% of suspects being arrested.
+
+- Calibration plot indicates how well our estimates match empirical estimates. In the resulting plot, most instances are on 3% to 10%, and the model estimate match empirical values well. Between 10% to 30%, empirical probability tend to be higher than the model estimated probability.
+
+### Predicting if frisked using naive bayes
+
+In our third model, we used a naive bayes classifier to predict whether or not a stop also lead to a body frisk using the same predictors as the previous models. This classifier was trained on a randomly sampled 50% of the full SQF data from 2008-2011, and tested on the remaining 50% of the data. The test accuracy of the classifier is 67.8%.
+
+```{r, echo=FALSE}
+knitr::include_graphics('performance_plot_frisked.pdf')
+```
+
+The performance plot shows the estimated percentage of frisks conducted as a function of the number of stops conducted.
+
+
+```{r, echo=FALSE}
+knitr::include_graphics('calibration_frisked.pdf')
+```
+
+The calibration plot indicates how well the model estimated probabilities match the empirical probabilities. The model is accurate in estimated probabilities above 30%, which represents the majority of the data. However, the model greatly underestimates the probability of being frisked around 20-30%. There is also one group of observations with an empirical probability around 35%, which the model estimates with almost 0% probability.
+
